@@ -6,40 +6,53 @@ import java.util.Scanner;
 
 public class Client {
 
-    private final Socket socket;
-    private final String name;
+    private final Socket socket;    // Сокет - дескриптор для связи между клиентом и сервером по протоколу IP.
+    private final String name;      // Имя клиента.
+
+    /**
+     * BufferedWriter — это класс из библиотеки Java, который используется для записи данных в поток байтов.
+     * Он работает как буфер между приложением и физическим устройством, улучшая производительность системы.
+     */
     private BufferedWriter bufferedWriter;
+
+    /**
+     * BufferedReader — это класс из библиотеки Java, предназначенный для чтения данных из потока байтов.
+     */
     private BufferedReader bufferedReader;
 
-    public Client(Socket socket, String userName){
+    /**
+     * Конструктор, создающий нового клиента, который подключается к серверу через указанный сокет (socket).
+     * При этом создается поток чтения и поток записи для обмена данными между клиентом и сервером.
+     * Если при создании потоков возникает ошибка, то закрываются все открытые ресурсы (closeEverything).
+     *
+     * @param socket   — дескриптор для связи между клиентом и сервером по протоколу IP.
+     * @param userName — имя клиента.
+     */
+    public Client(Socket socket, String userName) {
         this.socket = socket;
         name = userName;
-        try
-        {
+        try {
             bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
-
-
     }
+
 
     /**
      * Слушатель для входящих сообщений
      */
-    public void listenForMessage(){
+    public void listenForMessage() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 String message;
-                while (socket.isConnected()){
+                while (socket.isConnected()) {
                     try {
                         message = bufferedReader.readLine();
                         System.out.println(message);
-                    }
-                    catch (IOException e){
+                    } catch (IOException e) {
                         closeEverything(socket, bufferedReader, bufferedWriter);
                     }
                 }
@@ -50,25 +63,43 @@ public class Client {
     /**
      * Отправить сообщение
      */
-    public void sendMessage(){
+    public void sendMessage() {
         try {
-            bufferedWriter.write(name);
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
+            bufferedWriter.write(name);                            // Отправка своего имени на сервер.
+            bufferedWriter.newLine();                              // Отправка перехода на следующую строку.
+            bufferedWriter.flush();                                // Вызов метода немедленной отправки сообщения.
 
-            Scanner scanner = new Scanner(System.in);
-            while (socket.isConnected()) {
-                String message = scanner.nextLine();
-                bufferedWriter.write(name + ": " + message);
+            Scanner scanner = new Scanner(System.in);              // Создание объекта сканер.
+            while (socket.isConnected()) {                         // Цикл ожидания и немедленной отправки сообщения,
+                String message = scanner.nextLine();               // с указанием своего имени.
+
+                if (message.startsWith("@")) {
+                    int i = message.indexOf(' ');                  // Распарсим текст по пробелу.
+                    String recipient = message.substring(0, i);    // Выделим адресат.
+                    String text = message.substring(i);            // Выделим текст сообщения.
+                    bufferedWriter.write(recipient + " " + name + ": " + text);
+                } else {
+                    bufferedWriter.write(name + ": " + message);
+                }
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
-    private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
+
+
+    /**
+     * Метод closeEverything закрывает входящий и исходящий потоки, если переменная не равна нулю и вызывала исключение.
+     * После этого закрывается socket.
+     *
+     * @param socket         — дескриптор для связи между клиентом и сервером по протоколу IP.
+     * @param bufferedReader — это класс из библиотеки Java, предназначенный для чтения данных из потока байтов.
+     * @param bufferedWriter — это класс из библиотеки Java, который используется для записи данных в поток байтов.
+     */
+    private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
         try {
             if (bufferedReader != null) {
                 bufferedReader.close();
@@ -79,11 +110,8 @@ public class Client {
             if (socket != null) {
                 socket.close();
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
 }
