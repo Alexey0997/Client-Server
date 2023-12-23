@@ -57,24 +57,7 @@ public class ClientManager implements Runnable {
      *
      * @param message - текст сообщения от клиента.
      */
-//    private void broadcastMessage(String message) {
-//
-//        if (message.startsWith("@")) {
-//            String[] parts = message.split("\\s+", 2);
-//            if (parts.length == 2 && parts[0].startsWith("@")) {
-//                String recipient = parts[0].substring(1); // выделить имя клиента (удаляем символ '@')
-//                message = parts[1];                                // выделить сообщение
-//                for (ClientManager client : clients) {
-//                    if (client.name.equals(recipient)) {
-//                        client.bufferedWriter.write(message);
-//                        client.bufferedWriter.newLine();
-//                        client.bufferedWriter.flush();
-//                    }
-//
-//                }
-//        }
-//    }
-//
+
     private void broadcastMessage(String message){
 
         for (ClientManager client: clients) {
