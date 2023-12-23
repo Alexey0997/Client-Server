@@ -6,12 +6,12 @@ import java.util.ArrayList;
 
 public class ClientManager implements Runnable {
 
-    private final Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
-    private String name;
+    private final Socket socket;            // Дескриптор для связи между клиентом и сервером по протоколу IP.
+    private BufferedReader bufferedReader;  // Класс библиотеки Java, предназначенный для чтения данных из потока байтов.
+    private BufferedWriter bufferedWriter;  // Класс библиотеки Java, используемый для записи данных в поток байтов.
+    private String name;                    // Имя клиента.
 
-    public final static ArrayList<ClientManager> clients = new ArrayList<>();
+    public final static ArrayList<ClientManager> clients = new ArrayList<>(); // Коллекция всех клиентов.
 
     public ClientManager(Socket socket) {
         this.socket = socket;
@@ -22,8 +22,7 @@ public class ClientManager implements Runnable {
             clients.add(this);
             System.out.println(name + " подключился к чату.");
             broadcastMessage("Server: " + name + " подключился к чату.");
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
 
@@ -43,21 +42,62 @@ public class ClientManager implements Runnable {
                     break;
                 }*/
                 broadcastMessage(massageFromClient);
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
                 break;
             }
         }
     }
 
+    /**
+     * Метод broadcastMessage реализует алгоритм действий по отправке сообщений клиентам.
+     * Происходит перебор клиентов из списка и в случае, если имя клиента не соответствует имени, с которого поступило
+     * сообщение, то ему пересылается это сообщение.
+     * При возникновении ошибок, вызывается метод closeEverything.
+     *
+     * @param message - текст сообщения от клиента.
+     */
+//    private void broadcastMessage(String message) {
+//
+//        if (message.startsWith("@")) {
+//            String[] parts = message.split("\\s+", 2);
+//            if (parts.length == 2 && parts[0].startsWith("@")) {
+//                String recipient = parts[0].substring(1); // выделить имя клиента (удаляем символ '@')
+//                message = parts[1];                                // выделить сообщение
+//                for (ClientManager client : clients) {
+//                    if (client.name.equals(recipient)) {
+//                        client.bufferedWriter.write(message);
+//                        client.bufferedWriter.newLine();
+//                        client.bufferedWriter.flush();
+//                    }
+//
+//                }
+//        }
+//    }
+//
     private void broadcastMessage(String message){
+
         for (ClientManager client: clients) {
             try {
-                if (!client.name.equals(name)) {
-                    client.bufferedWriter.write(message);
-                    client.bufferedWriter.newLine();
-                    client.bufferedWriter.flush();
+                if (message.startsWith("@")) {
+                    String[] parts = message.split("\\s+", 2);
+                    String recipient = null;
+                    String privateMessage = null;
+                    if (parts.length == 2 && parts[0].startsWith("@")){
+                        recipient = parts[0].substring(1);
+                        privateMessage = parts[1];
+                    }
+                    if (client.name.equals(recipient)) {
+                        client.bufferedWriter.write(privateMessage);
+                        client.bufferedWriter.newLine();
+                        client.bufferedWriter.flush();
+                    }
+                } else {
+                    if (!client.name.equals(name)) {
+                        client.bufferedWriter.write(message);
+                        client.bufferedWriter.newLine();
+                        client.bufferedWriter.flush();
+                    }
                 }
             }
             catch (IOException e){
@@ -67,6 +107,14 @@ public class ClientManager implements Runnable {
     }
 
 
+    /**
+     * Метод closeEverything обеспечивает удаление клиента из коллекции, закрывает буферы на чтение и на запись,
+     * а также клиентский сокет, в случае возникновения ошибки.
+     *
+     * @param socket         — дескриптор для связи между клиентом и сервером по протоколу IP.
+     * @param bufferedReader — это класс из библиотеки Java, предназначенный для чтения данных из потока байтов.
+     * @param bufferedWriter — это класс из библиотеки Java, который используется для записи данных в поток байтов.
+     */
     private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
         // Удаление клиента из коллекции
         removeClient();
@@ -88,7 +136,10 @@ public class ClientManager implements Runnable {
         }
     }
 
-    private void removeClient(){
+    /**
+     * Метод removeClient выполняет удаление клиента из коллекции при возникновении ошибки.
+     */
+    private void removeClient() {
         clients.remove(this);
         System.out.println(name + " покинул чат.");
         broadcastMessage("Server: " + name + " покинул чат.");

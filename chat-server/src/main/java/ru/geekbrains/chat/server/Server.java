@@ -12,7 +12,13 @@ public class Server {
         this.serverSocket = serverSocket;
     }
 
-    public void runServer(){
+    /**
+     * Метод runServer запускает бесконечный цикл мониторинга новых подключений в рамках основного потока приложения.
+     * При вызове метода accept создается объект клиентского менеджера и в рамках нового потока вызываются инструкции
+     * в контексте метода run. Затем цикл повторяется, начиная с прослушивания основного потока.
+     * В случае появления исключений, вызывается метод закрытия серверного сокета.
+     */
+    public void runServer() {
         try {
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
@@ -21,14 +27,13 @@ public class Server {
                 Thread thread = new Thread(clientManager);
                 thread.start();
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             closeSocket();
         }
     }
 
-    private void closeSocket(){
-        try{
+    private void closeSocket() {
+        try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
